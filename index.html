@@ -44,7 +44,7 @@
 <body>
 
     <h1 style="background: linear-gradient(90deg, #4285F4, #D96570); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-        ✦ Gemini Thumbnail Magic
+        ✦ Gemini Thumbnail Magic (Fixed)
     </h1>
 
     <div class="controls">
@@ -53,7 +53,7 @@
             Dapatkan Gratis di: <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:#4285F4;">Google AI Studio</a>.
         </div>
         <div class="row">
-            <input type="password" id="geminiKey" placeholder="AIzaSyDY43vy_2MLE-R4tRIQdFRj627EWemAzAY">
+            <input type="password" id="geminiKey" placeholder="Tempel API Key Gemini di sini (AIza...)">
         </div>
 
         <hr style="border-color: #333; margin: 20px 0;">
@@ -88,7 +88,7 @@
     const canvas = new fabric.Canvas('c');
     canvas.setBackgroundColor('#000', canvas.renderAll.bind(canvas));
 
-    // --- FUNGSI GEMINI AI ---
+    // --- FUNGSI GEMINI AI (YANG SUDAH DIPERBAIKI) ---
     async function askGeminiTitle() {
         const apiKey = document.getElementById('geminiKey').value;
         const topic = document.getElementById('ytUrl').value || "Video Seru";
@@ -101,11 +101,11 @@
 
         statusDiv.innerText = "🤖 Gemini sedang berpikir...";
 
-        // Endpoint Gemini 1.5 Flash (Model cepat & ringan)
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        // ---> INI DIA PERBAIKANNYA: Menggunakan 'gemini-pro' <---
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
 
         // Prompt Engineering
-        const promptText = `Buatkan S satu judul YouTube thumbnail yang PENDEK (maksimal 6 kata), SENSASIONAL, dan MEMBUAT PENASARAN (Clickbait) untuk topik: "${topic}". Tulis judulnya saja tanpa tanda kutip. Gunakan HURUF KAPITAL.`;
+        const promptText = `Buatkan 1 judul YouTube thumbnail yang PENDEK (maksimal 6 kata), SENSASIONAL, dan MEMBUAT PENASARAN (Clickbait) untuk topik: "${topic}". Tulis judulnya saja tanpa tanda kutip. Gunakan HURUF KAPITAL.`;
 
         const requestBody = {
             contents: [{
@@ -123,20 +123,24 @@
             const data = await response.json();
 
             if (data.error) {
+                // Jika masih error, tampilkan pesan detail
                 throw new Error(data.error.message);
             }
 
             // Ambil teks hasil generate
-            const resultText = data.candidates[0].content.parts[0].text.trim();
-            statusDiv.innerText = "✅ Berhasil!";
-            
-            // Masukkan ke Canvas
-            addText(resultText);
+            if (data.candidates && data.candidates.length > 0) {
+                const resultText = data.candidates[0].content.parts[0].text.trim();
+                statusDiv.innerText = "✅ Berhasil!";
+                addText(resultText); // Masukkan ke layar
+            } else {
+                statusDiv.innerText = "⚠️ AI tidak menjawab. Coba lagi.";
+            }
 
         } catch (error) {
             console.error(error);
             statusDiv.innerText = "❌ Gagal: " + error.message;
-            alert("Gagal menghubungi Gemini. Cek API Key Anda.");
+            // Pesan error yang lebih jelas
+            alert("Gagal menghubungi Gemini. Pastikan API Key Anda benar dan koneksi internet lancar.\n\nDetail Error: " + error.message);
         }
     }
 
@@ -163,7 +167,6 @@
     }
 
     function addText(customText = "JUDUL BARU") {
-        // Hapus tanda kutip atau spasi berlebih
         customText = customText.replace(/^"|"$/g, '');
         
         const text = new fabric.IText(customText, {
