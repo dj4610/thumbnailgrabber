@@ -3,122 +3,201 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YouTube Thumbnail Grabber</title>
+    <title>Gemini Thumbnail Editor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
+        body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: #121212; color: #e0e0e0; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        
+        /* Container Utama */
+        .controls { background: #1e1e1e; padding: 25px; border-radius: 12px; width: 100%; max-width: 900px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.6); border: 1px solid #333; }
+        
+        /* Baris & Input */
+        .row { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; }
+        .full-width { width: 100%; }
+        
+        input[type="text"], input[type="password"] { 
+            padding: 12px; border-radius: 6px; border: 1px solid #444; 
+            background: #2c2c2c; color: white; flex: 1; font-size: 14px;
         }
-        .container {
-            background: white;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 500px;
-            text-align: center;
+        
+        /* Tombol */
+        button { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; color: white; font-size: 14px; }
+        button:hover { opacity: 0.9; transform: translateY(-2px); }
+        button:active { transform: translateY(0); }
+
+        .btn-blue { background: #4285F4; } /* Warna Google Blue */
+        .btn-gemini { 
+            background: linear-gradient(90deg, #4285F4, #9B72CB, #D96570); /* Warna Gradien Gemini */
+            box-shadow: 0 0 15px rgba(66, 133, 244, 0.4);
         }
-        h2 { color: #333; margin-bottom: 20px; }
-        input {
-            width: 80%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            margin-bottom: 15px;
-            outline: none;
-        }
-        input:focus { border-color: #ff0000; }
-        button {
-            background-color: #ff0000;
-            color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background 0.3s;
-        }
-        button:hover { background-color: #cc0000; }
-        #result { margin-top: 20px; display: none; }
-        img {
-            max-width: 100%;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 10px;
-        }
-        .download-btn {
-            display: inline-block;
-            text-decoration: none;
-            background: #333;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 4px;
-            font-size: 14px;
-        }
+        .btn-green { background: #0F9D58; }
+        .btn-red { background: #DB4437; }
+        
+        /* Canvas */
+        .canvas-container-style { border: 2px solid #333; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+        
+        /* Status */
+        #statusInfo { font-size: 0.9em; color: #9B72CB; margin-top: 5px; font-style: italic; }
+        .api-note { font-size: 0.8em; color: #aaa; margin-bottom: 10px; background: #252525; padding: 10px; border-radius: 5px; border-left: 4px solid #4285F4;}
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>📺 Ambil Thumbnail YouTube</h2>
-    <p>Tempel link video di bawah ini:</p>
-    <input type="text" id="urlInput" placeholder="https://www.youtube.com/watch?v=...">
-    <br>
-    <button onclick="getThumbnail()">Ambil Gambar</button>
+    <h1 style="background: linear-gradient(90deg, #4285F4, #D96570); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+        ✦ Gemini Thumbnail Magic
+    </h1>
 
-    <div id="result">
-        <h3>Hasil Thumbnail (HD):</h3>
-        <img id="thumbImg" src="" alt="Thumbnail Preview">
-        <br>
-        <a id="downloadLink" href="" target="_blank" class="download-btn">Buka Gambar Penuh</a>
+    <div class="controls">
+        <div class="api-note">
+            🔑 <strong>Wajib:</strong> Masukkan Google Gemini API Key. <br>
+            Dapatkan Gratis di: <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:#4285F4;">Google AI Studio</a>.
+        </div>
+        <div class="row">
+            <input type="password" id="geminiKey" placeholder="AIzaSyDY43vy_2MLE-R4tRIQdFRj627EWemAzAY">
+        </div>
+
+        <hr style="border-color: #333; margin: 20px 0;">
+
+        <div class="row">
+            <input type="text" id="ytUrl" placeholder="Link YouTube atau Topik Video...">
+            <button class="btn-blue" onclick="loadYoutubeImage()">📸 1. Ambil Gambar</button>
+        </div>
+
+        <div class="row">
+            <button class="btn-gemini full-width" onclick="askGeminiTitle()">✨ 2. Minta Gemini Buatkan Judul Clickbait</button>
+        </div>
+        <div id="statusInfo"></div>
+
+        <hr style="border-color: #333; margin: 20px 0;">
+
+        <div class="row">
+            <button class="btn-blue" onclick="addText()">+ Teks</button>
+            <input type="color" id="colorPicker" value="#ffff00" onchange="changeColor()" style="flex: 0 0 50px; height: 40px; cursor:pointer;">
+            <button class="btn-red" onclick="deleteObject()">Hapus Objek</button>
+            <div style="flex:1;"></div>
+            <button class="btn-green" onclick="downloadImage()">💾 Download JPG</button>
+        </div>
     </div>
-</div>
+
+    <div class="canvas-container-style">
+        <canvas id="c" width="1280" height="720"></canvas>
+    </div>
 
 <script>
-    function getThumbnail() {
-        const url = document.getElementById('urlInput').value;
-        const resultDiv = document.getElementById('result');
-        const imgElement = document.getElementById('thumbImg');
-        const linkElement = document.getElementById('downloadLink');
-        
-        // Logika untuk mengambil ID Video dari link
-        let videoId = "";
-        
-        // Pola Link Biasa (youtube.com/watch?v=ID)
-        if (url.includes('v=')) {
-            videoId = url.split('v=')[1];
-            const ampersandPosition = videoId.indexOf('&');
-            if(ampersandPosition != -1) {
-                videoId = videoId.substring(0, ampersandPosition);
-            }
-        } 
-        // Pola Link Pendek (youtu.be/ID)
-        else if (url.includes('youtu.be/')) {
-            videoId = url.split('youtu.be/')[1];
-            // Hapus query param jika ada (misal ?t=10)
-            if (videoId.includes('?')) {
-                videoId = videoId.split('?')[0];
-            }
+    // --- SETUP CANVAS ---
+    const canvas = new fabric.Canvas('c');
+    canvas.setBackgroundColor('#000', canvas.renderAll.bind(canvas));
+
+    // --- FUNGSI GEMINI AI ---
+    async function askGeminiTitle() {
+        const apiKey = document.getElementById('geminiKey').value;
+        const topic = document.getElementById('ytUrl').value || "Video Seru";
+        const statusDiv = document.getElementById('statusInfo');
+
+        if (!apiKey) {
+            alert("Harap masukkan Gemini API Key terlebih dahulu!");
+            return;
         }
 
-        if (videoId) {
-            // URL resmi gambar thumbnail kualitas tertinggi (Max Res)
-            const thumbUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+        statusDiv.innerText = "🤖 Gemini sedang berpikir...";
+
+        // Endpoint Gemini 1.5 Flash (Model cepat & ringan)
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+        // Prompt Engineering
+        const promptText = `Buatkan S satu judul YouTube thumbnail yang PENDEK (maksimal 6 kata), SENSASIONAL, dan MEMBUAT PENASARAN (Clickbait) untuk topik: "${topic}". Tulis judulnya saja tanpa tanda kutip. Gunakan HURUF KAPITAL.`;
+
+        const requestBody = {
+            contents: [{
+                parts: [{ text: promptText }]
+            }]
+        };
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                throw new Error(data.error.message);
+            }
+
+            // Ambil teks hasil generate
+            const resultText = data.candidates[0].content.parts[0].text.trim();
+            statusDiv.innerText = "✅ Berhasil!";
             
-            imgElement.src = thumbUrl;
-            linkElement.href = thumbUrl;
-            resultDiv.style.display = "block";
-        } else {
-            alert("Link tidak valid! Pastikan link dari YouTube.");
-            resultDiv.style.display = "none";
+            // Masukkan ke Canvas
+            addText(resultText);
+
+        } catch (error) {
+            console.error(error);
+            statusDiv.innerText = "❌ Gagal: " + error.message;
+            alert("Gagal menghubungi Gemini. Cek API Key Anda.");
         }
+    }
+
+    // --- FUNGSI EDITOR STANDAR ---
+    function loadYoutubeImage() {
+        const url = document.getElementById('ytUrl').value;
+        let videoId = "";
+        
+        // Logika ambil ID Youtube
+        if (url.includes('v=')) videoId = url.split('v=')[1].split('&')[0];
+        else if (url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1].split('?')[0];
+
+        if (videoId) {
+            const imgUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+            fabric.Image.fromURL(imgUrl, function(img) {
+                img.scaleToWidth(1280);
+                img.scaleToHeight(720);
+                canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas));
+                document.getElementById('statusInfo').innerText = "Gambar termuat.";
+            }, { crossOrigin: 'anonymous' });
+        } else {
+            alert("Link tidak valid! Masukkan link YouTube yang benar.");
+        }
+    }
+
+    function addText(customText = "JUDUL BARU") {
+        // Hapus tanda kutip atau spasi berlebih
+        customText = customText.replace(/^"|"$/g, '');
+        
+        const text = new fabric.IText(customText, {
+            left: 50, top: 100, 
+            fontFamily: 'Impact', // Font umum thumbnail
+            fill: document.getElementById('colorPicker').value,
+            fontSize: 100, 
+            stroke: '#000', strokeWidth: 3,
+            shadow: new fabric.Shadow({ color: 'black', blur: 30 })
+        });
+        canvas.add(text);
+        canvas.setActiveObject(text);
+    }
+
+    function deleteObject() {
+        const activeObj = canvas.getActiveObject();
+        if (activeObj) canvas.remove(activeObj);
+    }
+
+    function changeColor() {
+        const color = document.getElementById('colorPicker').value;
+        const activeObj = canvas.getActiveObject();
+        if (activeObj) { 
+            activeObj.set('fill', color); 
+            canvas.requestRenderAll(); 
+        }
+    }
+
+    function downloadImage() {
+        const dataURL = canvas.toDataURL({ format: 'jpeg', quality: 0.9 });
+        const link = document.createElement('a');
+        link.download = 'gemini-thumbnail.jpg';
+        link.href = dataURL;
+        link.click();
     }
 </script>
 
